@@ -1,0 +1,59 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "usagov-search"
+dynamic = ["version"]
+description = "Search USA.gov, extract page content, archive HTML, and ask Groq-powered questions"
+authors = [
+  { name = "Precious Nliwasa", email = "nliwasa8@gmail.com" },
+]
+readme = "README.md"
+requires-python = ">=3.9"
+license = { text = "MIT" }
+dependencies = ["playwright>=1.40"]
+keywords = ["usagov", "usa.gov", "search", "cli", "scraper", "ai", "groq", "rag"]
+classifiers = [
+  "Development Status :: 3 - Alpha",
+  "Environment :: Console",
+  "Intended Audience :: Developers",
+  "License :: OSI Approved :: MIT License",
+  "Operating System :: OS Independent",
+  "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3 :: Only",
+  "Programming Language :: Python :: 3.9",
+  "Programming Language :: Python :: 3.10",
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
+  "Programming Language :: Python :: 3.13",
+  "Topic :: Internet :: WWW/HTTP",
+  "Typing :: Typed",
+]
+
+[project.optional-dependencies]
+agent = ["groq>=0.20"]
+dev = ["build", "pytest>=8", "ruff", "twine"]
+
+[project.scripts]
+usagov-search = "usagov_search.cli:main"
+usagov-ask = "usagov_search.cli_agent:main"
+
+[tool.hatch.version]
+path = "src/usagov_search/__init__.py"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/usagov_search"]
+
+[tool.hatch.build.targets.sdist]
+include = ["src", "tests", "README.md", "LICENSE", "pyproject.toml"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-q"
+
+[tool.ruff]
+line-length = 88
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP"]
