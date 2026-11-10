@@ -411,44 +411,6 @@ python -m playwright install chromium
 pytest
 ```
 
-The package uses a src layout:
-
-```text
-src/usagov_search/
-├── __init__.py    # public API and version
-├── __main__.py    # python -m usagov_search
-├── agent.py       # USAgovAgent: retrieval + Groq answer with citations
-├── cli.py         # argument parsing and output formatting
-├── cli_agent.py   # usagov-ask
-├── client.py      # search, fetch_page, extraction, HTML saving
-├── models.py      # Result, ExtractedPage, SearchResponse
-├── parsing.py     # count/rank parsing and text helpers
-└── py.typed
-```
-
-Tests under `tests/` are offline. They cover parsing, HTML saving, CLI output,
-and the agent (using a fake Groq client); they do not launch a browser or call
-Groq.
-
-## Publishing
-
-```bash
-python -m pip install --upgrade build twine
-python -m build
-python -m twine check dist/*
-
-# Verify on TestPyPI first
-python -m twine upload --repository testpypi dist/*
-python -m pip install --index-url https://test.pypi.org/simple/ usagov-search
-
-# Production
-python -m twine upload dist/*
-```
-
-Use a PyPI API token with username `__token__` and an environment variable;
-never commit the token. Bump `__version__` in `src/usagov_search/__init__.py`
-before each release.
-
 ## Credits
 
 Created by Precious Nliwasa <nliwasa8@gmail.com>.
