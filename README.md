@@ -56,6 +56,10 @@ print(response.saved_files)           # written HTML paths
 `search()` accepts `extract=[1, 3]`, `extract="1-3"`, or `extract="2,4,7"`.
 Use `save_dir=None` (default) to skip HTML archiving.
 
+`search()` and `fetch_page()` also work in Jupyter/IPython: when an asyncio
+event loop is already running, the browser work is moved to a worker thread
+automatically.
+
 Lower-level helpers are exported too:
 
 ```python
@@ -400,16 +404,6 @@ selectors there.
   to `www.usa.gov`, so opening the file offline can look unstyled.
 - This is an unofficial convenience client. Respect the site's terms and do not
   hammer it.
-
-## Development
-
-```bash
-git clone <your-repo>
-cd <repo-checkout>
-python -m pip install -e ".[dev,agent]"
-python -m playwright install chromium
-pytest
-```
 
 ## Credits
 
