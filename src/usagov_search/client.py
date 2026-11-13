@@ -2,11 +2,13 @@
 
 from __future__ import annotations
 
+import asyncio
 import re
 import time
+from concurrent.futures import ThreadPoolExecutor
 from contextlib import contextmanager
 from pathlib import Path
-from typing import TYPE_CHECKING, Iterator, Sequence
+from typing import TYPE_CHECKING, Callable, Iterator, Sequence, TypeVar
 from urllib.parse import urlencode, urljoin, urlparse
 
 from .models import ExtractedPage, Result, SearchResponse
@@ -85,6 +87,24 @@ def _load_playwright():
             "  python -m playwright install chromium"
         ) from exc
     return sync_playwright, PlaywrightTimeoutError
+
+
+T = TypeVar("T")
+
+
+def _run_blocking(func: Callable[..., T], /, *args, **kwargs) -> T:
+    """Run sync Playwright work, offloading it when an event loop is running.
+
+    Jupyter and IPython keep an asyncio loop on the main thread, and Playwright's
+    sync API refuses to start inside one. A fresh worker thread has no loop, so
+    the same call works from notebooks and from async applications.
+    """
+    try:
+        asyncio.get_running_loop()
+    except RuntimeError:
+        return func(*args, **kwargs)
+    with ThreadPoolExecutor(max_workers=1) as executor:
+        return executor.submit(func, *args, **kwargs).result()
 
 
 def build_url(query: str, affiliate: str, page: int) -> str:
@@ -282,8 +302,27 @@ def fetch_page(
     """Fetch and extract a single USA.gov page.
 
     Useful when the user already knows the exact page to read. The URL must be
-    on ``usa.gov`` or a ``*.usa.gov`` subdomain.
+    on ``usa.gov`` or a ``*.usa.gov`` subdomain. Safe to call from Jupyter,
+    IPython, or async code.
     """
+    return _run_blocking(
+        _fetch_page_blocking,
+        url,
+        timeout=timeout,
+        retries=retries,
+        save_dir=save_dir,
+        headed=headed,
+    )
+
+
+def _fetch_page_blocking(
+    url: str,
+    *,
+    timeout: float = 45.0,
+    retries: int = 2,
+    save_dir: str | Path | None = None,
+    headed: bool = False,
+) -> ExtractedPage:
     _validate_usa_gov_url(url)
     if timeout <= 0:
         raise ValueError("timeout must be > 0")
@@ -334,7 +373,42 @@ def search(
     Returns:
         A :class:`SearchResponse` with results, extracted pages, saved files,
         and any non-fatal warnings.
+
+    Safe to call from Jupyter, IPython, or async code: when an event loop is
+    already running, the browser work is moved to a worker thread.
     """
+    return _run_blocking(
+        _search_blocking,
+        query,
+        lang=lang,
+        affiliate=affiliate,
+        page=page,
+        limit=limit,
+        max_pages=max_pages,
+        timeout=timeout,
+        retries=retries,
+        delay=delay,
+        extract=extract,
+        save_dir=save_dir,
+        headed=headed,
+    )
+
+
+def _search_blocking(
+    query: str,
+    *,
+    lang: str = "en",
+    affiliate: str | None = None,
+    page: int = 1,
+    limit: int = 20,
+    max_pages: int = 10,
+    timeout: float = 45.0,
+    retries: int = 2,
+    delay: float = 1.0,
+    extract: Sequence[int] | str | None = None,
+    save_dir: str | Path | None = None,
+    headed: bool = False,
+) -> SearchResponse:
     if not query.strip():
         raise ValueError("query must not be empty")
     if lang not in AFFILIATES:
