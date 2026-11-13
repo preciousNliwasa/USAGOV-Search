@@ -24,7 +24,7 @@ from .client import fetch_page, save_html, search
 from .models import ExtractedPage, Result, SearchResponse
 from .parsing import parse_extract_values
 
-__version__ = "0.2.4"
+__version__ = "0.2.5"
 
 __all__ = [
     "AgentAnswer",

@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import asyncio
 import re
+import sys
 import time
 from concurrent.futures import ThreadPoolExecutor
 from contextlib import contextmanager
@@ -104,7 +105,22 @@ def _run_blocking(func: Callable[..., T], /, *args, **kwargs) -> T:
     except RuntimeError:
         return func(*args, **kwargs)
     with ThreadPoolExecutor(max_workers=1) as executor:
-        return executor.submit(func, *args, **kwargs).result()
+        return executor.submit(_run_isolated, func, *args, **kwargs).result()
+
+
+def _run_isolated(func: Callable[..., T], *args, **kwargs) -> T:
+    # Jupyter selects WindowsSelectorEventLoopPolicy, and selector loops cannot
+    # spawn subprocesses on Windows, which Playwright needs for its driver.
+    if sys.platform == "win32":
+        proactor = getattr(asyncio, "WindowsProactorEventLoopPolicy", None)
+        policy = asyncio.get_event_loop_policy()
+        if proactor is not None and not isinstance(policy, proactor):
+            asyncio.set_event_loop_policy(proactor())
+            try:
+                return func(*args, **kwargs)
+            finally:
+                asyncio.set_event_loop_policy(policy)
+    return func(*args, **kwargs)
 
 
 def build_url(query: str, affiliate: str, page: int) -> str:
