@@ -39,6 +39,12 @@ dev = ["build", "pytest>=8", "ruff", "twine"]
 usagov-search = "usagov_search.cli:main"
 usagov-ask = "usagov_search.cli_agent:main"
 
+[project.urls]
+Homepage = "https://github.com/preciousNliwasa/USAGOV-Search"
+Documentation = "https://github.com/preciousNliwasa/USAGOV-Search#readme"
+Source = "https://github.com/preciousNliwasa/USAGOV-Search"
+Issues = "https://github.com/preciousNliwasa/USAGOV-Search/issues"
+
 [tool.hatch.version]
 path = "src/usagov_search/__init__.py"
 
